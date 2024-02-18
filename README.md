@@ -26,3 +26,44 @@ Ensure you have Python 3 installed. Install the library using the pip package ma
 ```sh
 pip install git+https://github.com/krasnikov05/socks5mitm.git
 ```
+
+Contribution
+------------
+
+Please follow the guidelines outlined below:
+
+### Setting up a Virtual Environment
+
+Before you start contributing, create and activate a virtual environment using the following command:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate   # On Linux or macOS
+.venv\Scripts\activate      # On Windows
+pip install '.[dev]'
+```
+
+### Tools
+
+For maintaining code quality, use the following commands:
+
+```sh
+ruff check src
+ruff format .
+mypy src --strict
+pytest
+```
+
+### Git Hooks
+
+Enable Git hooks by running the following command:
+
+```sh
+git config --local core.hooksPath .githooks/
+```
+
+If you need to disable the pre-commit hook for a specific commit, use the following command:
+
+```sh
+NO_PRECOMMIT=1 git commit -m "Your commit message here"
+```
