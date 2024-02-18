@@ -1,0 +1,22 @@
+#!/bin/sh
+echo 'Run $ NO_PRECOMMIT=1 git commit ... to ignore checks'
+
+if test -n "$NO_PRECOMMIT"; then
+	exit 0
+fi
+
+set -e
+cd $(git rev-parse --show-toplevel)
+
+if not test -d .venv; then
+	python3 -m venv .venv
+	source .venv/bin/activate
+	pip install '.[dev]'
+fi
+
+source .venv/bin/activate
+
+python -m ruff check src
+python -m mypy src --strict
+python -m pytest tests
+python -m ruff format .
