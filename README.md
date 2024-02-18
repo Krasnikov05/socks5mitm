@@ -12,8 +12,8 @@ Features
 - [ ] Address spoofing
 - [ ] Authorization
 - [ ] Connection through other proxy servers
+- [ ] HTTP proxy support
 - [ ] Message inspection and modification
-- [ ] HTTP Proxy support
 - [ ] TLS interception
 
 Examples
