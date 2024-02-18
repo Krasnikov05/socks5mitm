@@ -1,0 +1,16 @@
+[project]
+name = "socks5mitm"
+version = "v2.1.1"
+description = " This library implements a basic SOCKS5 server with some MITM features."
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["mitm", "socks5", "mitmproxy", "socks5-server", "mitm-server", "socks5-proxy-server"]
+
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["ruff", "pytest"]
+
+[build-system]
+requires = ["setuptools>=43.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
