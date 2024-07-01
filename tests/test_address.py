@@ -46,7 +46,7 @@ def test_address_domain_length_error(mock_socket):
 def test_address_ipv6(mock_socket):
     mock_socket.recv.side_effect = [
         b"\x04",
-        b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10",
+        b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10",
         b"\x05\x39",
     ]
     address = Address.read(mock_socket)
@@ -58,7 +58,7 @@ def test_address_ipv6(mock_socket):
 def test_address_read_ipv6_length_mismatch(mock_socket):
     mock_socket.recv.side_effect = [
         b"\x04",
-        b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10\x11",
+        b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11",
         b"\x05\x39",
     ]
     with pytest.raises(Socks5ProtocolError):

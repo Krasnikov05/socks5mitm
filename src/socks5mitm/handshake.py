@@ -1,5 +1,7 @@
 import socket
 from enum import Enum
+from typing import Any
+from abc import ABC, abstractmethod
 from .protocol import Socks5ProtocolError
 
 
@@ -34,24 +36,35 @@ class AuthMethod(Enum):
         return dictionary[integer]
 
 
-class NoAuth:
+class Auth(ABC):
+    @abstractmethod
+    def verify(self, *args: Any, **kwargs: Any) -> bool:
+        pass
+
+    @abstractmethod
+    def handshake(self, sock: socket.socket) -> bool:
+        pass
+
+
+class NoAuth(Auth):
     method: AuthMethod = AuthMethod.NO_AUTH
 
-    def verify(self) -> bool:
+    def verify(self, *args: Any, **kwargs: Any) -> bool:
         return True
 
     def handshake(self, sock: socket.socket) -> bool:
         return True
 
 
-class UsernamePassword:
+class UsernamePassword(Auth):
     method: AuthMethod = AuthMethod.USERNAME_PASSWORD
 
     def __init__(self, login: str, password: str):
         self.login = login
         self.password = password
 
-    def verify(self, login: str, password: str) -> bool:
+    def verify(self, *args: Any, **kwargs: Any) -> bool:
+        login, password = args
         return (login, password) == (self.login, self.password)
 
     def handshake(self, sock: socket.socket) -> bool:
@@ -68,3 +81,16 @@ class UsernamePassword:
             raise Socks5ProtocolError("Cannot read string length")
         length = int.from_bytes(length_data)
         return sock.recv(length).decode()
+
+
+def client_greeting(sock: socket.socket) -> list[AuthMethod]:
+    if sock.recv(1) != b"\x05":
+        raise Socks5ProtocolError("Wrong protocol version")
+    nauth_data = sock.recv(1)
+    if len(nauth_data) != 1:
+        raise Socks5ProtocolError("Cannot read count of auth method")
+    nauth = int.from_bytes(nauth_data)
+    auth = sock.recv(nauth)
+    if len(auth) != nauth:
+        raise Socks5ProtocolError("Wrong")
+    return [AuthMethod.from_int(i) for i in auth]
