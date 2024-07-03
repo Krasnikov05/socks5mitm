@@ -1,7 +1,6 @@
 import socket
 from enum import Enum, auto
-
-from .protocol import Socks5ProtocolError
+from .protocol import SOCKS5ProtocolError, receive
 
 
 class AddressType(Enum):
@@ -13,13 +12,13 @@ class AddressType(Enum):
     def from_int(cls, number: int) -> "AddressType":
         """Convert an integer to the corresponding AddressType."""
         if number not in (1, 3, 4):
-            raise Socks5ProtocolError("Unknown address type")
+            raise SOCKS5ProtocolError("Unknown address type")
         return {1: cls.IPV4, 3: cls.DOMAIN, 4: cls.IPV6}[number]
 
     @classmethod
     def read(cls, sock: socket.socket) -> "AddressType":
         """Read and return an AddressType from the socket."""
-        number = int.from_bytes(sock.recv(1), "big")
+        number = int.from_bytes(receive(sock, 1))
         return cls.from_int(number)
 
 
@@ -35,48 +34,38 @@ class Address:
     @classmethod
     def read(cls, sock: socket.socket) -> "Address":
         """Read and return an Address instance from the socket."""
+        # TODO: normal way to generate packet
         address_type = AddressType.read(sock)
+        full_packet = sock.recv(1024)
+        packet = full_packet[:-2]
+        port = int.from_bytes(full_packet[-2:], "big")
         match address_type:
             case AddressType.IPV4:
-                host = cls._read_ipv4(sock)
+                host = cls._read_ipv4(packet)
             case AddressType.DOMAIN:
-                host = cls._read_domain(sock)
+                host = cls._read_domain(packet)
             case AddressType.IPV6:
-                host = cls._read_ipv6(sock)
-        port_data = sock.recv(2)
-        if len(port_data) != 2:
-            raise Socks5ProtocolError("Cannot read port")
-        port = int.from_bytes(port_data, "big")
-        return cls(host, port, address_type)
+                host = cls._read_ipv6(packet)
+        output = cls(host, port, address_type)
+        output.packet = full_packet
+        print(output)
+        return output
 
     @staticmethod
-    def _read_ipv4(sock: socket.socket) -> str:
+    def _read_ipv4(packet: bytes) -> str:
         """Read and return an IPv4 address from the socket."""
-        host_data = sock.recv(4)
-        if len(host_data) != 4:
-            raise Socks5ProtocolError("IPv4 address must be 4 bytes")
-        return socket.inet_ntoa(host_data)
+        return socket.inet_ntoa(packet)
 
     @staticmethod
-    def _read_domain(sock: socket.socket) -> str:
+    def _read_domain(packet: bytes) -> str:
         """Read and return a domain address from the socket."""
-        length_data = sock.recv(1)
-        if len(length_data) != 1:
-            raise Socks5ProtocolError("Cannot read domain length")
-        length = int.from_bytes(length_data, "big")
         try:
-            host = sock.recv(length).decode()
+            host = packet[1:].decode()
         except UnicodeDecodeError:
-            raise Socks5ProtocolError("Error decoding domain")
-
-        if length != len(host):
-            raise Socks5ProtocolError("Domain length doesn't match")
+            raise SOCKS5ProtocolError("Error decoding domain")
         return host
 
     @staticmethod
-    def _read_ipv6(sock: socket.socket) -> str:
+    def _read_ipv6(packet: bytes) -> str:
         """Read and return an IPv6 address from the socket."""
-        host_data = sock.recv(16)
-        if len(host_data) != 16:
-            raise Socks5ProtocolError("IPv6 address must be 16 bytes")
-        return socket.inet_ntop(socket.AF_INET6, host_data)
+        return socket.inet_ntop(socket.AF_INET6, packet)

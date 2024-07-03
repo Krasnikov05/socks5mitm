@@ -2,7 +2,7 @@ import socket
 from enum import Enum
 from typing import Any
 from abc import ABC, abstractmethod
-from .protocol import Socks5ProtocolError
+from .protocol import SOCKS5ProtocolError, receive
 
 
 class AuthMethod(Enum):
@@ -32,7 +32,7 @@ class AuthMethod(Enum):
             0x09: cls.JSON_PARAMETER_BLOCK,
         }
         if integer not in dictionary:
-            raise Socks5ProtocolError(f"Unknown auth method: {hex(integer)}")
+            raise SOCKS5ProtocolError(f"Unknown auth method: {hex(integer)}")
         return dictionary[integer]
 
 
@@ -68,29 +68,23 @@ class UsernamePassword(Auth):
         return (login, password) == (self.login, self.password)
 
     def handshake(self, sock: socket.socket) -> bool:
-        if sock.recv(1) != b"\x01":
+        if receive(sock, 1) != b"\x01":
             return False
         login = UsernamePassword.recv_string(sock)
         password = UsernamePassword.recv_string(sock)
-        return self.verify(login, password)
+        status = self.verify(login, password)
+        sock.send(bytes([0x01, not status]))
+        return status
 
     @staticmethod
     def recv_string(sock: socket.socket) -> str:
-        length_data = sock.recv(1)
-        if len(length_data) != 1:
-            raise Socks5ProtocolError("Cannot read string length")
-        length = int.from_bytes(length_data)
-        return sock.recv(length).decode()
+        length = int.from_bytes(receive(sock, 1))
+        return receive(sock, length).decode()
 
 
 def client_greeting(sock: socket.socket) -> list[AuthMethod]:
-    if sock.recv(1) != b"\x05":
-        raise Socks5ProtocolError("Wrong protocol version")
-    nauth_data = sock.recv(1)
-    if len(nauth_data) != 1:
-        raise Socks5ProtocolError("Cannot read count of auth method")
-    nauth = int.from_bytes(nauth_data)
-    auth = sock.recv(nauth)
-    if len(auth) != nauth:
-        raise Socks5ProtocolError("Wrong")
+    if receive(sock, 1) != b"\x05":
+        raise SOCKS5ProtocolError(f"Wrong protocol version {repr(data)}")
+    nauth = int.from_bytes(receive(sock, 1))
+    auth = receive(sock, nauth)
     return [AuthMethod.from_int(i) for i in auth]

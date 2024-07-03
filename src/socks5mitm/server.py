@@ -3,8 +3,9 @@ import select
 import socketserver
 from abc import ABC
 from typing import Any, Iterator
+from threading import Thread
 from .address import Address
-from .protocol import Socks5ProtocolError
+from .protocol import SOCKS5ProtocolError, receive
 from .handshake import Auth, NoAuth, client_greeting
 
 
@@ -19,26 +20,37 @@ class BaseSOCKS5Handler(socketserver.BaseRequestHandler):
     server: Any = None
 
     def handle(self) -> None:
+        ctx = self.socks5server.init_context()
         user = self.request
         methods = client_greeting(user)
-        for method in self.server.handle_auth():
-            if method in methods:
+        for method in self.socks5server.handle_auth(ctx):
+            if method.method in methods:
+                user.send(bytes([0x05, method.method.value]))
                 if method.handshake(user):
                     break
                 else:
                     return
         else:
+            user.send(bytes([0x05, 0xFF]))
             return
-        address = self.server.handle_auth(Address.read(user))
+        if receive(user, 1) != b"\x05":
+            raise SOCKS5ProtocolError("Wrong protocol version")
+        receive(user, 1)
+        if receive(user, 1) != b"\x00":
+            raise SOCKS5ProtocolError("Reserved, must be 0x00")
+        address = self.socks5server.handle_address(Address.read(user), ctx)
+        user.send(b"\x05\x00\x00\x01\x01\x01\x01\x01\x01\x01")
         remote = socket.socket()
         remote.connect((address.host, address.port))
         while True:
-            ready, _, _ = select.select([user, remote], [], [])
-            if user in ready:
-                if remote.send(self.server.handle_send(user.recv(BUFFER_SIZE))) <= 0:
+            read, _, _ = select.select([user, remote], [], [])
+            if user in read:
+                data = user.recv(4096)
+                if remote.send(data) <= 0:
                     break
-            if remote in ready:
-                if user.send(self.server.handle_receive(remote.recv(BUFFER_SIZE))) <= 0:
+            if remote in read:
+                data = remote.recv(4096)
+                if user.send(data) <= 0:
                     break
 
 
@@ -60,7 +72,6 @@ class SOCKS5Server:
 
     def start(self, host, port):
         class Handler(BaseSOCKS5Handler):
-            server: SOCKS5Server = server
+            socks5server: SOCKS5Server = self
 
-    return Handler
-        ThreadedTCPServer((host, port), )
+        ThreadedTCPServer((host, port), Handler).serve_forever()
