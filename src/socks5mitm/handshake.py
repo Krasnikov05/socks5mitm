@@ -84,7 +84,7 @@ class UsernamePassword(Auth):
 
 def client_greeting(sock: socket.socket) -> list[AuthMethod]:
     if receive(sock, 1) != b"\x05":
-        raise SOCKS5ProtocolError(f"Wrong protocol version {repr(data)}")
+        raise SOCKS5ProtocolError("Invalid protocol version")
     nauth = int.from_bytes(receive(sock, 1))
     auth = receive(sock, nauth)
     return [AuthMethod.from_int(i) for i in auth]

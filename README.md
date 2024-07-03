@@ -8,16 +8,37 @@ This library implements a basic SOCKS5 server with [Man-in-the-middle attack](ht
 
 Features
 --------
-- [ ] IPv4 and IPv6 support
-- [ ] Address spoofing
-- [ ] Authorization
+- [x] IPv4 and IPv6 support
+- [x] Address spoofing
+- [x] Authorization
 - [ ] Connection through other proxy servers
 - [ ] HTTP proxy support
-- [ ] Message inspection and modification
+- [x] Message inspection and modification
 - [ ] TLS interception
 
 Examples
 --------
+
+```python
+import sys
+import socks5mitm
+
+
+class Server(socks5mitm.SOCKS5Server):
+    def handle_auth(self, ctx):
+        yield socks5mitm.UsernamePassword("user", "12345")
+
+    def handle_address(self, address, ctx):
+        print(f"REQUEST {address.host}:{address.port}")
+        return address
+
+
+if __name__ == "__main__":
+    port = 9090 if len(sys.argv) != 2 else int(sys.argv[1])
+    print(f"Listening on 127.0.0.1:{port}")
+    Server().start("127.0.0.1", port)
+```
+
 Take a look at the [examples](https://github.com/Krasnikov05/socks5mitm/tree/main/examples).
 
 Installation

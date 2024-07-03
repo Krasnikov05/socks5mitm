@@ -9,7 +9,7 @@ class SOCKS5ProtocolError(Exception):
     pass
 
 
-def receive(sock: socket.socket, length: int, timeout: float = TIMEOUT):
+def receive(sock: socket.socket, length: int, timeout: float = TIMEOUT) -> bytes:
     data = b""
     while len(data) < length:
         new_data = sock.recv(length - len(data))

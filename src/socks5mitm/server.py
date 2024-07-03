@@ -1,9 +1,7 @@
 import socket
 import select
 import socketserver
-from abc import ABC
 from typing import Any, Iterator
-from threading import Thread
 from .address import Address
 from .protocol import SOCKS5ProtocolError, receive
 from .handshake import Auth, NoAuth, client_greeting
@@ -17,7 +15,7 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 
 class BaseSOCKS5Handler(socketserver.BaseRequestHandler):
-    server: Any = None
+    socks5server: Any = None
 
     def handle(self) -> None:
         ctx = self.socks5server.init_context()
@@ -55,7 +53,7 @@ class BaseSOCKS5Handler(socketserver.BaseRequestHandler):
 
 
 class SOCKS5Server:
-    def init_context(self):
+    def init_context(self) -> Any:
         return {}
 
     def handle_auth(self, ctx: Any) -> Iterator[Auth]:
@@ -67,10 +65,10 @@ class SOCKS5Server:
     def handle_send(self, data: bytes, ctx: Any, tcp: bool = False) -> bytes:
         return data
 
-    def handle_receive(self, data: bytes, Any, tcp: bool = False) -> bytes:
+    def handle_receive(self, data: bytes, tcp: bool = False) -> bytes:
         return data
 
-    def start(self, host, port):
+    def start(self, host: str, port: int) -> None:
         class Handler(BaseSOCKS5Handler):
             socks5server: SOCKS5Server = self
 

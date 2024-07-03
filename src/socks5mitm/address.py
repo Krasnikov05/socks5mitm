@@ -47,8 +47,6 @@ class Address:
             case AddressType.IPV6:
                 host = cls._read_ipv6(packet)
         output = cls(host, port, address_type)
-        output.packet = full_packet
-        print(output)
         return output
 
     @staticmethod
