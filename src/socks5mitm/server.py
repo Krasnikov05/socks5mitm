@@ -44,10 +44,12 @@ class BaseSOCKS5Handler(socketserver.BaseRequestHandler):
             read, _, _ = select.select([user, remote], [], [])
             if user in read:
                 data = user.recv(4096)
+                data = self.socks5server.handle_send(data, ctx)
                 if remote.send(data) <= 0:
                     break
             if remote in read:
                 data = remote.recv(4096)
+                data = self.socks5server.handle_receive(data, ctx)
                 if user.send(data) <= 0:
                     break
 
@@ -62,10 +64,10 @@ class SOCKS5Server:
     def handle_address(self, address: Address, ctx: Any) -> Address:
         return address
 
-    def handle_send(self, data: bytes, ctx: Any, tcp: bool = False) -> bytes:
+    def handle_send(self, data: bytes, ctx: Any) -> bytes:
         return data
 
-    def handle_receive(self, data: bytes, tcp: bool = False) -> bytes:
+    def handle_receive(self, data: bytes, ctx: Any) -> bytes:
         return data
 
     def start(self, host: str, port: int) -> None:
