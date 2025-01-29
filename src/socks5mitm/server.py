@@ -72,4 +72,7 @@ class SOCKS5Server:
         class Handler(BaseSOCKS5Handler):
             socks5server: SOCKS5Server = self
 
-        ThreadedTCPServer((host, port), Handler).serve_forever()
+        try:
+            ThreadedTCPServer((host, port), Handler).serve_forever()
+        except KeyboardInterrupt:
+            pass
