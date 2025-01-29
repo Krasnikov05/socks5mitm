@@ -2,6 +2,7 @@ import socket
 import select
 import socketserver
 from typing import Any, Iterator
+from .proxy import Proxy
 from .address import Address
 from .protocol import SOCKS5ProtocolError, receive
 from .handshake import Auth, NoAuth, client_greeting
@@ -38,8 +39,12 @@ class BaseSOCKS5Handler(socketserver.BaseRequestHandler):
             raise SOCKS5ProtocolError("Reserved, must be 0x00")
         address = self.socks5server.handle_address(Address.read(user), ctx)
         user.send(b"\x05\x00\x00\x01\x01\x01\x01\x01\x01\x01")
-        remote = socket.socket()
-        remote.connect((address.host, address.port))
+        proxy = self.socks5server.use_proxy(ctx)
+        if proxy:
+            remote = proxy.connect(address)
+        else:
+            remote = socket.socket()
+            remote.connect((address.host, address.port))
         while True:
             read, _, _ = select.select([user, remote], [], [])
             if user in read:
@@ -52,6 +57,7 @@ class BaseSOCKS5Handler(socketserver.BaseRequestHandler):
                 data = self.socks5server.handle_receive(data, ctx)
                 if user.send(data) <= 0:
                     break
+        self.socks5server.handle_end(ctx)
 
 
 class SOCKS5Server:
@@ -59,16 +65,22 @@ class SOCKS5Server:
         return {}
 
     def handle_auth(self, ctx: Any) -> Iterator[Auth]:
-        yield NoAuth()
+        return [NoAuth()]
 
     def handle_address(self, address: Address, ctx: Any) -> Address:
         return address
+
+    def use_proxy(self, ctx) -> Proxy | None:
+        return None
 
     def handle_send(self, data: bytes, ctx: Any) -> bytes:
         return data
 
     def handle_receive(self, data: bytes, ctx: Any) -> bytes:
         return data
+
+    def handle_end(self, ctx) -> None:
+        pass
 
     def start(self, host: str, port: int) -> None:
         class Handler(BaseSOCKS5Handler):

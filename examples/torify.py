@@ -3,12 +3,14 @@ import socks5mitm
 
 
 class Server(socks5mitm.SOCKS5Server):
-    def handle_auth(self, ctx):
-        return [socks5mitm.UsernamePassword("user", "12345")]
-
     def handle_address(self, address, ctx):
-        print(f"REQUEST {address.host}:{address.port}")
+        ctx["torify"] = address.host.endswith(".onion")
         return address
+
+    def use_proxy(self, ctx):
+        if ctx["torify"]:
+            return socks5mitm.SOCKS5Proxy("127.0.0.1", 9050)
+        return None
 
 
 if __name__ == "__main__":

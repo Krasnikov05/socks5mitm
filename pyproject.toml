@@ -6,7 +6,7 @@ readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["mitm", "socks5", "mitmproxy", "socks5-server", "mitm-server", "socks5-proxy-server"]
 
-dependencies = []
+dependencies = ["pysocks"]
 
 [project.optional-dependencies]
 dev = ["ruff", "pytest", "mypy"]
