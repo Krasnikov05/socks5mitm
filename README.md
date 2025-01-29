@@ -74,17 +74,3 @@ ruff format .
 mypy src --strict
 pytest
 ```
-
-### Git Hooks
-
-Enable Git hooks by running the following command:
-
-```sh
-git config --local core.hooksPath .githooks/
-```
-
-If you need to disable the pre-commit hook for a specific commit, use the following command:
-
-```sh
-NO_PRECOMMIT=1 git commit -m "Your commit message here"
-```
