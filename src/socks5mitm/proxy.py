@@ -6,21 +6,27 @@ from abc import ABC, abstractmethod
 from .address import Address
 
 
+type Socket = socket.socket | socks.socksocket
+
+
 class Proxy(ABC):
     def __init__(
         self, host: str, port: int, auth: Tuple[str, str] | None = None
     ) -> None:
+        """Initialize the proxy with host, port, and optional authentication."""
         self.host = host
         self.port = port
         self.auth = auth
 
     @abstractmethod
-    def connect(self, target: Address) -> socket.socket:
+    def connect(self, target: Address) -> Socket:
+        """Establish a connection to the target address through the proxy."""
         pass
 
 
 class SOCKS5Proxy(Proxy):
-    def connect(self, target: Address) -> socket.socket:
+    def connect(self, target: Address) -> Socket:
+        """Connect to the target address using a SOCKS5 proxy."""
         sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
         if self.auth:
             username, password = self.auth
@@ -38,9 +44,10 @@ class SOCKS5Proxy(Proxy):
 
 
 class HTTPProxy(Proxy):
-    def connect(self, target: Address) -> socket.socket:
+    def connect(self, target: Address) -> Socket:
+        """Connect to the target address using an HTTP proxy."""
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(self.host, self.port)
+        sock.connect((self.host, self.port))
         connect_request = (
             f"CONNECT {target.host}:{target.port} HTTP/1.1\r\n"
             f"Host: {target.host}:{target.port}\r\n"

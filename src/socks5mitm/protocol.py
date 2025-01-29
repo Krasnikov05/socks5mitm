@@ -10,6 +10,7 @@ class SOCKS5ProtocolError(Exception):
 
 
 def receive(sock: socket.socket, length: int, timeout: float = TIMEOUT) -> bytes:
+    """Receives a specific amount of bytes from a socket."""
     data = b""
     while len(data) < length:
         new_data = sock.recv(length - len(data))

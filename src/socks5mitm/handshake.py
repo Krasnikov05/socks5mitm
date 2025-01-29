@@ -19,6 +19,7 @@ class AuthMethod(Enum):
 
     @classmethod
     def from_int(cls, integer: int) -> "AuthMethod":
+        """Return the corresponding AuthMethod for a given integer."""
         dictionary = {
             0x00: cls.NO_AUTH,
             0x01: cls.GSSAPI,
@@ -39,10 +40,12 @@ class AuthMethod(Enum):
 class Auth(ABC):
     @abstractmethod
     def verify(self, *args: Any, **kwargs: Any) -> bool:
+        """Verify authentication credentials."""
         pass
 
     @abstractmethod
     def handshake(self, sock: socket.socket) -> bool:
+        """Perform authentication handshake over the given socket."""
         pass
 
 
@@ -50,9 +53,11 @@ class NoAuth(Auth):
     method: AuthMethod = AuthMethod.NO_AUTH
 
     def verify(self, *args: Any, **kwargs: Any) -> bool:
+        """Always return True as no authentication is required."""
         return True
 
     def handshake(self, sock: socket.socket) -> bool:
+        """Always return True as no authentication handshake is required."""
         return True
 
 
@@ -60,14 +65,17 @@ class UsernamePassword(Auth):
     method: AuthMethod = AuthMethod.USERNAME_PASSWORD
 
     def __init__(self, login: str, password: str):
+        """Initialize with username and password credentials."""
         self.login = login
         self.password = password
 
     def verify(self, *args: Any, **kwargs: Any) -> bool:
+        """Verify the provided username and password."""
         login, password = args
         return (login, password) == (self.login, self.password)
 
     def handshake(self, sock: socket.socket) -> bool:
+        """Perform username/password authentication handshake."""
         if receive(sock, 1) != b"\x01":
             return False
         login = UsernamePassword.recv_string(sock)
@@ -78,11 +86,13 @@ class UsernamePassword(Auth):
 
     @staticmethod
     def recv_string(sock: socket.socket) -> str:
+        """Receive a length-prefixed string from the socket."""
         length = int.from_bytes(receive(sock, 1))
         return receive(sock, length).decode()
 
 
 def client_greeting(sock: socket.socket) -> list[AuthMethod]:
+    """Handle the client's initial greeting and return supported authentication methods."""
     if receive(sock, 1) != b"\x05":
         raise SOCKS5ProtocolError("Invalid protocol version")
     nauth = int.from_bytes(receive(sock, 1))

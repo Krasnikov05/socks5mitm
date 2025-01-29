@@ -17,3 +17,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["socks.*"]
+ignore_missing_imports = true

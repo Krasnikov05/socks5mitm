@@ -11,7 +11,7 @@ Features
 - [x] IPv4 and IPv6 support
 - [x] Address spoofing
 - [x] Authorization
-- [ ] Connection through other proxy servers
+- [x] Connection through other proxy servers
 - [x] Message inspection and modification
 - [ ] TLS interception
 
@@ -43,7 +43,7 @@ Take a look at the [examples](https://github.com/Krasnikov05/socks5mitm/tree/mai
 Installation
 ------------
 Ensure you have Python 3 installed. Install the library using the pip package manager:
-```sh
+```shell
 pip install git+https://github.com/krasnikov05/socks5mitm.git
 ```
 
@@ -56,7 +56,7 @@ Please follow the guidelines outlined below:
 
 Before you start contributing, create and activate a virtual environment using the following command:
 
-```sh
+```shell
 python3 -m venv .venv
 source .venv/bin/activate   # On Linux or macOS
 .venv\Scripts\activate      # On Windows
@@ -67,7 +67,7 @@ pip install '.[dev]'
 
 For maintaining code quality, use the following commands:
 
-```sh
+```shell
 ruff check src
 ruff format .
 mypy src --strict
