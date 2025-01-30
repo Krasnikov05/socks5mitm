@@ -1,6 +1,6 @@
 [project]
 name = "socks5mitm"
-version = "v0.0.0"
+version = "v1.1.0"
 description = " This library implements a basic SOCKS5 server with MITM features."
 readme = "README.md"
 license = {file = "LICENSE"}
