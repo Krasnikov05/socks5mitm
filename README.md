@@ -25,7 +25,7 @@ import socks5mitm
 
 class Server(socks5mitm.SOCKS5Server):
     def handle_auth(self, ctx):
-        yield socks5mitm.UsernamePassword("user", "12345")
+        return [socks5mitm.UsernamePassword("user", "12345")]
 
     def handle_address(self, address, ctx):
         print(f"REQUEST {address.host}:{address.port}")
